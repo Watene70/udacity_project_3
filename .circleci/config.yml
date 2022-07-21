@@ -85,7 +85,7 @@ jobs:
             
   scan-frontend:
     docker:
-      Docker image here
+      circleci/node:13.8.0
     steps:
       cd frontend
       npm install
