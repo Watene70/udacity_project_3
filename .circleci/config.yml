@@ -266,10 +266,10 @@ jobs:
     #         fi
             
 
-workflows:
-  default:
-    jobs:
-      - build-frontend
+# workflows:
+#   default:
+#     jobs:
+#       - build-frontend
       # - build-backend
       # - test-frontend:
       #     requires: [build-frontend]
