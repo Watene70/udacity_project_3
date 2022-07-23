@@ -109,23 +109,19 @@ jobs:
               cd frontend
               npm install
               npm audit --audit-level=critical
-              
- scan-backend:
-   docker:
-     - image: circleci/node:13.8.0
+  scan-backend:
+    docker:
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
           keys: [backend-scan]
       - run:
-          name: back-end scan
+          name: backend scan
           command: |
               cd backend
               npm install
               
-              
-              
-
   # deploy-infrastructure:
     # docker:
       # Docker image here that supports AWS CLI
