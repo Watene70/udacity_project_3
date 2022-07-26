@@ -127,6 +127,8 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
+       - restore_cache:
+          keys: [infrastructure]
       - run:
           name: Install gzip and tar
           command: yum install -y tar gzip
