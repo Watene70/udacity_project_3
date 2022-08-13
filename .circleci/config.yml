@@ -11,7 +11,7 @@ commands:
     steps:
       - run:
           name: Destroy environments
-          # when: on_fail
+          when: on_fail
           command: |
             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.stack-name >>
             aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.stack-name>>
@@ -166,23 +166,27 @@ jobs:
       - destroy-environment
 
                   
-  # configure-infrastructure:
-  #   docker:
-  #     - image: python:3.7-alpine3.11
-  #   steps:
-  #     - checkout
-  #     - add_ssh_keys:
-  #     - fingerprints: [""]
-  #     - attach_workspace:
-  #       at: .
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           apk add --update ansible
-  #     - run:
-  #         name: Configure server
-  #         command: |
-  #           ansible-playbook -i ./.circleci/ansible/inventory.txt ./.      
+  configure-infrastructure:
+    docker:
+      - image: cimg/python:3.8.13
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["22:c5:1f:0f:17:aa:b0:27:5d:ab:81:bc:df:be:14:c9"]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            pip3 install ansible
+            pip3 install awscli
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
+      - destroy-environment    
+       
 
   # run-migrations:
   #   docker:
