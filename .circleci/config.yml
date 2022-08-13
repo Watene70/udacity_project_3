@@ -4,35 +4,38 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      stack-name:
+      id:
         type: string
-        default: ${CIRCLE_WORKFLOW_ID:0:7}
-
     steps:
       - run:
-          name: Destroy environments
-          when: on_fail
+          name: Destroy environments backend
           command: |
-            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.stack-name >>
-            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.stack-name>>
+            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
+          when: on_fail
+      - run:
+          name: Destroy environments frontend
+          command: |
+            aws s3 rb s3://udapeople-<< parameters.id >> --force  
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >>
+          when: on_fail
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      # Add parameter here     
+      id: 
+        type: string
     steps:
       - run:
           name: Revert migrations
-          # Add when this will run
+          when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
+            SUCCESS=$(curl --insecure https://kvdb.io/J4UdWQ7AziAs1AYF6xYjeN/migration_${CIRCLE_WORKFLOW_ID:0:7})
             if(( $SUCCESS==1 )); 
             then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+              cd ~/project/backend
+              npm install
+              npm run migrations:revert
             fi
             
 jobs:
@@ -341,10 +344,10 @@ jobs:
             else
               return 1
             fi
-      # - destroy-environment:
-      #     id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      # - revert-migrations:
-      #     id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+      - destroy-environment:
+          id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - revert-migrations:
+          id: "${CIRCLE_WORKFLOW_ID:0:7}" 
 
 
   # cloudfront-update:
