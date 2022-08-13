@@ -1,41 +1,45 @@
 version: 2.1
 
 commands:
-  destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+  destroy_environment:
+    description: Destroy backend and frontend cloudformation stacks given a workflow id.
     parameters:
       workflow_id:
         type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
     steps:
       - run:
-          name: Destroy environments backend
-          command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.workflow_id >>
+          name: Destroy environments
           when: on_fail
-      - run:
-          name: Destroy environments frontend
           command: |
-            aws s3 rb s3://udapeople-<< parameters.workflow_id >> --force  
-            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflow_id >>
-          when: on_fail
-
+            echo "Destroying environment: << parameters.workflow_id >> "
+            aws cloudformation delete-stack --stack-name "udapeople-backend-<< parameters.workflow_id >>" 
+            aws s3 rb s3://udapeople-<< parameters.workflow_id >> --force
+            aws cloudformation delete-stack --stack-name "udapeople-<< parameters.workflow_id >>"
+  slack-notify:
+    description: Send alert notifications to slack when there is a job failure.
+    steps:
+      - slack/notify:
+          channel: udapeople-alerts
+          event: fail
+          template: basic_fail_1
   revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.
+    description: Reverts the the last database migration to a clean slate.
     parameters:
-      id: 
+      workflow_id:
         type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
     steps:
       - run:
           name: Revert migrations
           when: on_fail
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS=$(curl --insecure https://kvdb.io/J4UdWQ7AziAs1AYF6xYjeN/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            if(( $SUCCESS==1 )); 
+            SUCCESS=$(curl --insecure  https://kvdb.io/BtyGwTRQwxKEHw8w8deLz3/migration_<< parameters.workflow_id >>)
+            if (( $SUCCESS == 1 ));
             then
-              cd ~/project/backend
-              npm install
-              npm run migrations:revert
+                cd ~/project/backend
+                npm install
+                npm run migration:revert
             fi
             
 jobs:
