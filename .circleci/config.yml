@@ -10,6 +10,7 @@ commands:
     parameters:
       id:
         type: string
+        default: ${CIRCLE_WORKFLOW-ID}
     steps:
       - run:
           name: Destroy environments backend
