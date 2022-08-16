@@ -13,14 +13,14 @@ parameters:
     default: xqzlp7yq
 
 commands:
-  slack-notify-on-fail:
-    description: Notify via slack on fail
-    steps:
-      - slack/notify:
-          channel: C03NW4N9HDF
-          event: fail
-          template: basic_fail_1
-            #### yum install epel-release -y
+  # slack-notify-on-fail:
+  #   description: Notify via slack on fail
+  #   steps:
+  #     - slack/notify:
+  #         channel: C03NW4N9HDF
+  #         event: fail
+  #         template: basic_fail_1
+  #           #### yum install epel-release -y
 
   destroy-environment-on-fail:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -45,11 +45,11 @@ commands:
               npm install
               npm run migrations:revert
             fi
-  notify-and-destroy:
-    description: Notify via slack on-fail and destroy already created aws infrastructure
-    steps:
-      - slack-notify-on-fail
-      - destroy-environment
+  # notify-and-destroy:
+  #   description: Notify via slack on-fail and destroy already created aws infrastructure
+  #   steps:
+  #     - slack-notify-on-fail
+  #     - destroy-environment
 
             
 jobs:
@@ -273,14 +273,14 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      # - slack-notify
-      # - destroy-environment
-      #      parameters:
-      #      id:
-      #      type: string
-      #      default: ${CIRCLE_WORKFLOW-ID}
+      - slack-notify
+      - destroy-environment
+           parameters:
+           id:
+           type: string
+           default: ${CIRCLE_WORKFLOW-ID}
 
-      # - revert-migrations      
+      - revert-migrations      
                     
   deploy-backend:
     docker:
