@@ -24,7 +24,7 @@ commands:
 #           template: basic_fail_1
             ##### yum install epel-release -y
 
- destroy-environment-on-fail:
+  destroy-environment-on-fail:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     steps:
       - run:
