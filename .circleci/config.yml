@@ -1,47 +1,56 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@4.1
-  slack: circleci/slack@4.10.1
+  slack: circleci/slack@4.1
+
+parameters:
+  workflow_id:
+    type: string
+    default: ${CIRCLE_WORKFLOW_ID:0:7}
+
+  kv-key:
+    type: string
+    default: xqzlp7yq
 
 commands:
-  destroy-environment:
+  slack-notify-on-fail:
+    description: Notify via slack on fail
+    steps:
+      - slack/notify:
+          channel: C03NW4N9HDF
+          event: fail
+          template: basic_fail_1
+            #### yum install epel-release -y
+
+  destroy-environment-on-fail:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    parameters:
-      id:
-        type: string
-        default: ${CIRCLE_WORKFLOW-ID}
     steps:
       - run:
-          name: Destroy environments backend
-          command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
+          name: Destroy environments on fail
           when: on_fail
-      - run:
-          name: Destroy environments frontend
           command: |
-            aws s3 rb s3://udapeople-<< parameters.id >> --force  
-            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >>
-          when: on_fail
-
+            aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
+            aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
-    parameters:
-      id: 
-        type: string
     steps:
       - run:
           name: Revert migrations
           when: on_fail
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS=$(curl --insecure https://kvdb.io/J4UdWQ7AziAs1AYF6xYjeN/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            if(( $SUCCESS==1 )); 
+            SUCCESS=$(curl https://keyvalue.immanuel.co/api/KeyVal/GetValue/<< pipeline.parameters.kv-key >>/migration_<< pipeline.parameters.workflow_id >>)
+            if [[ "$SUCCESS"==1 ]]
             then
               cd ~/project/backend
               npm install
               npm run migrations:revert
             fi
+  notify-and-destroy:
+    description: Notify via slack on-fail and destroy already created aws infrastructure
+    steps:
+      - slack-notify-on-fail
+      - destroy-environment
+
             
 jobs:
   build-frontend:
@@ -424,21 +433,56 @@ workflows:
       - scan-frontend:
           requires: [build-frontend]
       - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires:
+            - scan-frontend
+            - scan-backend
           filters:
             branches:
-              only: [master]
+              only:
+                - master
       - configure-infrastructure:
           requires: [deploy-infrastructure]
+          filters:
+            branches:
+              only:
+                - master
       - run-migrations:
           requires: [configure-infrastructure]
+          filters:
+            branches:
+              only:
+                - master
       - deploy-frontend:
           requires: [run-migrations]
+          filters:
+            branches:
+              only:
+                - master
       - deploy-backend:
           requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+          filters:
+            branches:
+              only:
+                - master
+      - smoke-tests:
+          requires:
+            - deploy-frontend
+            - deploy-backend
+          filters:
+            branches:
+              only:
+                - master
       - cloudfront-update:
-          requires: [smoke-test]
+          requires:
+            - smoke-tests
+          filters:
+            branches:
+              only:
+                - master
       - cleanup:
-          requires: [cloudfront-update]
+          requires:
+            - cloudfront-update
+          filters:
+            branches:
+              only:
+                - master
