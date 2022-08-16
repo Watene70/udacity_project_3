@@ -22,7 +22,7 @@ commands:
 #           template: basic_fail_1
             ##### yum install epel-release -y
 
-  destroy-environment:
+  destroy-environment-on-fail:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     steps:
       - run:
@@ -267,12 +267,12 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      # - slack-notify
-      # - destroy-environment
-      #     parameters:
-      #     id:
-      #     type: string
-      #     default: ${CIRCLE_WORKFLOW-ID}
+      - slack-notify
+      - destroy-environment
+          parameters:
+          id:
+          type: string
+          default: ${CIRCLE_WORKFLOW-ID}
 
       - revert-migrations      
                     
