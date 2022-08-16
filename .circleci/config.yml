@@ -24,8 +24,8 @@ commands:
 #           template: basic_fail_1
             ##### yum install epel-release -y
 
-  destroy-environment-on-fail:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+destroy-environment-on-fail:
+  description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     steps:
       - run:
           name: Destroy environments on fail
@@ -33,8 +33,8 @@ commands:
           command: |
             aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
             aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
-  revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.
+revert-migrations:
+  description: Revert the last migration if successfully run in the current workflow.
     steps:
       - run:
           name: Revert migrations
